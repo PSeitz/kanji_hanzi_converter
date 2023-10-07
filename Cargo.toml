@@ -1,0 +1,16 @@
+[package]
+name = "kanji_hanzi_converter"
+edition = "2021"
+authors = ["Pascal Seitz <pascal.seitz@gmail.com>"]
+description = "Translate Japanese Kanji to Chinese Hanzi"
+keywords = ["kanji", "hanzi", "converter"]
+homepage = "https://github.com/pseitz/kanji_hanzi_converter"
+repository = "https://github.com/pseitz/kanji_hanzi_converter"
+readme = "README.md"
+license = "MIT"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+fnv = "1.0.7"
