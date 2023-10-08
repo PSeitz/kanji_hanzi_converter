@@ -13,3 +13,10 @@ Chinese Characters Mapping Table of Japanese, Traditional Chinese and Simplified
 In Proceedings of the Eighth Conference on International Language Resources and Evaluation
 (LREC2012), pp.2149-2152, Istanbul, Turkey, (2012.5).
 ```
+
+Since the mapping contains questionable entries, there's an additional filtering based on a japanese kanji list (2310 entries).
+
+
+# TODO
+
+Filter simplified chinese entries based on GB2312 list in repo.

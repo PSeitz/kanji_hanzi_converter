@@ -1,17 +1,44 @@
-use fnv::FnvHashMap;
+//! Converts between Japanese Kanji Characters, Traditional Chinese Characters and Simplified Chinese Characters.
+//!
+//! Note that there's some abiguity between the converting
+//!
+//! E.g. "壹" in traditional chinese can be "一" or "壹" in Japanese Kanji.
+//!
+//! Another Example for ambiguity are those entries from the underlying dataset.
+//! The correct entry is typically line 5055, the line 3365 is strange.
+//! Line    Japanese Traditional Simplified
+//! 3365    學	     學	         学
+//! 5055    学	     學	         学
+//! 5383    斈	     學	         学
+//!
+//! For that reason, only japanese characters that are also in the kanji list (2310 characters) are considered.
+use fnv::{FnvHashMap, FnvHashSet};
 use once_cell::sync::OnceCell;
 fn _get_hashmap() -> FnvHashMap<char, Entry> {
     let mapping = include_str!("../kanji_mapping_table.txt");
 
     let mut hashmap = FnvHashMap::default();
 
-    for line in mapping.lines().skip(17) {
+    let kanji_list = get_kanji_list();
+    for line in mapping.lines() {
         if let Some(entry) = Entry::from_line(line) {
+            if !kanji_list.contains(&entry.japanese) {
+                continue;
+            }
             hashmap.insert(entry.japanese, entry.clone());
-            for val in &entry.traditional_chinese {
+
+            // Only the first entry
+            for val in entry.traditional_chinese.iter().take(1) {
+                // Dont' overwrite existing entries
+                if hashmap.contains_key(val) {
+                    continue;
+                }
                 hashmap.insert(*val, entry.clone());
             }
-            for val in &entry.simplified_chinese {
+            for val in entry.simplified_chinese.iter().take(1) {
+                if hashmap.contains_key(val) {
+                    continue;
+                }
                 hashmap.insert(*val, entry.clone());
             }
         }
@@ -19,10 +46,19 @@ fn _get_hashmap() -> FnvHashMap<char, Entry> {
     hashmap
 }
 
-static CELL: OnceCell<FnvHashMap<char, Entry>> = OnceCell::new();
-
 pub fn get_hashmap() -> &'static FnvHashMap<char, Entry> {
+    static CELL: OnceCell<FnvHashMap<char, Entry>> = OnceCell::new();
     CELL.get_or_init(|| _get_hashmap())
+}
+
+pub fn get_kanji_list() -> &'static FnvHashSet<char> {
+    static CELL: OnceCell<FnvHashSet<char>> = OnceCell::new();
+    CELL.get_or_init(|| {
+        let list = include_str!("../kanji_list_topological.txt");
+        list.lines()
+            .map(|line| line.trim().chars().next().unwrap())
+            .collect()
+    })
 }
 
 /// Converts a string of Japanese Kanji Character to Traditional Chinese Characters
@@ -144,5 +180,24 @@ mod tests {
     #[test]
     fn to_simplified_test() {
         assert_eq!(convert_to_simplified_chinese("醫生"), "医生");
+    }
+
+    #[test]
+    fn to_japanese() {
+        assert_eq!(convert_to_japanese_kanji("一"), "一");
+        assert_eq!(convert_to_japanese_kanji("学"), "学");
+        assert_eq!(convert_to_japanese_kanji("學"), "学");
+    }
+
+    #[test]
+    fn to_simplified_chinese() {
+        assert_eq!(convert_to_simplified_chinese("学"), "学");
+        assert_eq!(convert_to_simplified_chinese("學"), "学");
+    }
+
+    #[test]
+    fn to_traditional_chinese() {
+        assert_eq!(convert_to_traditional_chinese("学"), "學");
+        assert_eq!(convert_to_traditional_chinese("學"), "學");
     }
 }
